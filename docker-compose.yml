@@ -1,0 +1,18 @@
+version: '3.2'
+services:
+  elite-twemproxy:
+    image: anchorfree/twemproxy:${BRANCH_NAME}
+    container_name: elite-twemproxy
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - type: bind
+        source: ./nutcracker.yml
+        target: /opt/nutcracker.yml
+      - type: bind
+        source: /var/run/
+        target: /srv/run/
+      - type: bind
+        source: ./bats
+        target: /bats
