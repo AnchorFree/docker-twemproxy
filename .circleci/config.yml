@@ -1,15 +1,5 @@
 version: 2
 jobs:
-#  shellcheck:
-#    docker:
-#      - image: nlknguyen/alpine-shellcheck:v0.4.6
-#    steps:
-#      - checkout
-#      - run:
-#          name: ShellCheck all scripts
-#          command: |
-#            find . -type f -name '*.sh' | wc -l
-#            find . -type f -name '*.sh' | xargs shellcheck --external-sources
   build:
     working_directory: /app
     environment:
@@ -33,7 +23,7 @@ jobs:
           name: Login to Dockerhub
           command: |
             set -u
-            docker login --username "${DOCKER_USER:-$CIRCLE_USERNAME}" --password "${DOCKER_PASS}"
+            docker login --username "${DOCKERHUB_USERNAME:-$CIRCLE_USERNAME}" --password "${DOCKERHUB_PASSWORD}"
       - run:
           name: Fetch or build docker image
           command: |
@@ -53,12 +43,6 @@ jobs:
             - /caches/app.tar
 
       - run:
-          name: Run tests WRITEME!!!
-          command: |
-            #docker-compose -f ./docker-compose.test.yml up
-            true
-
-      - run:
           name: Tag and push to Dockerhub
           command: |
             if [ "${CIRCLE_BRANCH}" ]; then
@@ -75,14 +59,8 @@ workflows:
   version: 2
   workflow:
     jobs:
-#      - shellcheck:
-#          filters:
-#            tags:
-#              only: /.*/
       - build:
-          context: github_public_repo
-#          requires:
-#            - build
+          context: af-global
           filters:
             tags:
               only: /.*/
