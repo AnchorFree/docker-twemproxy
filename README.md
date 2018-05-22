@@ -312,3 +312,30 @@ Thank you to all of our [contributors](https://github.com/twitter/twemproxy/grap
 Copyright 2012 Twitter, Inc.
 
 Licensed under the Apache License, Version 2.0: http://www.apache.org/licenses/LICENSE-2.0
+
+DOCKER
+======
+
+Check history of health checks:
+
+```
+docker inspect --format='{{json .State.Health}}' elite-twemproxy | python -m json.tool | awk '{gsub(/\\n/,"\n                       ")}1'
+```
+
+DOCKER COMPOSE
+==============
+
+```
+BRANCH_NAME=INFRA-6245_simplify_container_builds docker-compose build --force-rm --no-cache --pull
+BRANCH_NAME=INFRA-6245_simplify_container_builds docker-compose up --detach --no-build
+```
+
+SMOKE TESTS
+==========
+
+```
+$ docker-compose exec elite-twemproxy bats /bats
+1..2
+ok 1 [INFRA-6245] [nutcracker] Check nutcracker configuration
+ok 2 [INFRA-6245] [nutcracker] Check nutcracker version
+```
