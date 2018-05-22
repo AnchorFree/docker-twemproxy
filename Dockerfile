@@ -19,6 +19,7 @@ RUN apk add --upgrade apk-tools@edge-main
 
 # CONFIGURE HEALTHCHECKS & INSTALL DEPENDENCIES
 RUN apk add fcgi bats@edge-community
+ADD ./bats /bats
 HEALTHCHECK --interval=30s --timeout=30s --start-period=1s --retries=3 CMD bats /bats/healthchecks.bats || exit 1
 
 COPY --from=build-env /root/twemproxy/src/nutcracker /usr/sbin/nutcracker
