@@ -6,6 +6,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    ports:
+      - "11211:11211"
     volumes:
       - type: bind
         source: ./nutcracker.yml

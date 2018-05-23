@@ -24,4 +24,6 @@ HEALTHCHECK --interval=30s --timeout=30s --start-period=1s --retries=3 CMD bats 
 
 COPY --from=build-env /root/twemproxy/src/nutcracker /usr/sbin/nutcracker
 
+EXPOSE 11211
+
 CMD ["/usr/sbin/nutcracker", "-c", "/opt/nutcracker.yml"]

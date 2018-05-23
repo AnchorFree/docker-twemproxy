@@ -326,8 +326,8 @@ DOCKER COMPOSE
 ==============
 
 ```
-BRANCH_NAME=INFRA-6245_simplify_container_builds docker-compose build --force-rm --no-cache --pull
-BRANCH_NAME=INFRA-6245_simplify_container_builds docker-compose up --detach --no-build
+BRANCH_NAME=v0.4.1-AF docker-compose build --force-rm --no-cache --pull
+BRANCH_NAME=v0.4.1-AF docker-compose up --detach --no-build
 ```
 
 SMOKE TESTS
