@@ -1,4 +1,4 @@
-# twemproxy (nutcracker) [![Build Status](https://secure.travis-ci.org/twitter/twemproxy.png)](http://travis-ci.org/twitter/twemproxy)
+# twemproxy (nutcracker) [![CircleCI](https://circleci.com/gh/AnchorFree/docker-twemproxy.svg?style=shield)](https://circleci.com/gh/AnchorFree/docker-twemproxy)
 
 ## Docker Hub
 
