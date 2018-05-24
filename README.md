@@ -330,15 +330,15 @@ DOCKER COMPOSE
 ==============
 
 ```
-BRANCH_NAME=v0.4.1-AF docker-compose build --force-rm --no-cache --pull
-BRANCH_NAME=v0.4.1-AF docker-compose up --detach --no-build
+BRANCH_NAME=$(git describe --tags  --always --dirty --broken) docker-compose build --force-rm --no-cache --pull
+BRANCH_NAME=$(git describe --tags  --always --dirty --broken) docker-compose up --detach --no-build
 ```
 
 SMOKE TESTS
 ==========
 
 ```
-$ docker-compose exec elite-twemproxy bats /bats
+$ BRANCH_NAME=$(git describe --tags  --always --dirty --broken) docker-compose exec elite-twemproxy bats /bats
 1..2
 ok 1 [INFRA-6245] [nutcracker] Check nutcracker configuration
 ok 2 [INFRA-6245] [nutcracker] Check nutcracker version
