@@ -1,5 +1,9 @@
 # twemproxy (nutcracker) [![CircleCI](https://circleci.com/gh/AnchorFree/docker-twemproxy.svg?style=shield)](https://circleci.com/gh/AnchorFree/docker-twemproxy)
 
+## Docker Hub
+
+* https://hub.docker.com/r/anchorfree/twemproxy/
+
 **twemproxy** (pronounced "two-em-proxy"), aka **nutcracker** is a fast and lightweight proxy for [memcached](http://www.memcached.org/) and [redis](http://redis.io/) protocol. It was built primarily to reduce the number of connections to the caching servers on the backend. This, together with protocol pipelining and sharding enables you to horizontally scale your distributed caching architecture.
 
 ## Build
@@ -326,15 +330,15 @@ DOCKER COMPOSE
 ==============
 
 ```
-BRANCH_NAME=INFRA-6245_simplify_container_builds docker-compose build --force-rm --no-cache --pull
-BRANCH_NAME=INFRA-6245_simplify_container_builds docker-compose up --detach --no-build
+BRANCH_NAME=$(git describe --tags  --always --dirty --broken) docker-compose build --force-rm --no-cache --pull
+BRANCH_NAME=$(git describe --tags  --always --dirty --broken) docker-compose up --detach --no-build
 ```
 
 SMOKE TESTS
 ==========
 
 ```
-$ docker-compose exec elite-twemproxy bats /bats
+$ BRANCH_NAME=$(git describe --tags  --always --dirty --broken) docker-compose exec elite-twemproxy bats /bats
 1..2
 ok 1 [INFRA-6245] [nutcracker] Check nutcracker configuration
 ok 2 [INFRA-6245] [nutcracker] Check nutcracker version
