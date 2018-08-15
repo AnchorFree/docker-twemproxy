@@ -1,29 +1,50 @@
 version: 2
 jobs:
+  vault-token:
+    docker:
+      - image: circleci/buildpack-deps:curl
+    environment:
+      VAULT_ADDR: https://vault.afdevops.com
+    working_directory: /tmp
+    steps:
+      - run: mkdir -p workspace
+      - run: |
+          export VAULT_TOKEN=$(curl -s -X POST -d '{"project": "'${CIRCLE_PROJECT_REPONAME}'", "build_num": "'${CIRCLE_BUILD_NUM}'", "vcs_revision": "'${CIRCLE_SHA1}'"}' ${VAULT_ADDR}/v1/auth/circleci/login | jq -r '.auth.client_token')
+          export DOCKER_LOGIN=$(curl --header "X-Vault-Token: ${VAULT_TOKEN}" --connect-timeout 5 --max-time 10 -k -s ${VAULT_ADDR}/v1/secret/common/docker/docker_auth_key | jq -r '.data.value')
+          echo ${DOCKER_LOGIN} | base64 -d | awk -F: '{print $1}' > workspace/DOCKER_USER
+          echo ${DOCKER_LOGIN} | base64 -d | awk -F: '{print $2}' > workspace/DOCKER_PASS
+      - persist_to_workspace:
+          root: workspace
+          paths:
+            - DOCKER_USER
+            - DOCKER_PASS
   build:
     working_directory: /app
     environment:
       IMAGE_NAME: "${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME#docker-}:${CIRCLE_SHA1}"
     docker:
-      - image: docker:17.06.0-ce-git
+      - image: docker:17.09.0-ce-git
     steps:
       - checkout
       - setup_remote_docker
+      - attach_workspace:
+          at: /tmp/workspace
       - restore_cache:
           keys:
-            - v1-{{ .Branch }}
+            - v5-{{ .Branch }}-{{ .Revision }}
+            - v5-{{ .Branch }}-
+            - v5-
           paths:
             - /caches/app.tar
       - run:
           name: Load docker image layer cache
           command: |
-            set +o pipefail
-            docker load -i /caches/app.tar | true
+            docker load -i /caches/app.tar 2>&1 || true
       - run:
           name: Login to Dockerhub
           command: |
             set -u
-            docker login --username "${DOCKERHUB_USERNAME:-$CIRCLE_USERNAME}" --password "${DOCKERHUB_PASSWORD}"
+            cat /tmp/workspace/DOCKER_PASS | docker login -u $(cat /tmp/workspace/DOCKER_USER) --password-stdin
       - run:
           name: Fetch or build docker image
           command: |
@@ -31,19 +52,18 @@ jobs:
             # First check to see if the image has already been built,
             # because Build Binaries Only Once.
             PROJECT_LC=$(echo "${CIRCLE_PROJECT_USERNAME}" | tr '[:upper:]' '[:lower:]')
-            docker pull "${PROJECT_LC}/${CIRCLE_PROJECT_REPONAME#docker-}:${CIRCLE_SHA1}" \
-            || docker build --cache-from=app -t "${PROJECT_LC}/${CIRCLE_PROJECT_REPONAME#docker-}:${CIRCLE_SHA1}" --label circle.sha="${CIRCLE_SHA1}" --label circle.build_num="${CIRCLE_BUILD_NUM}" .
+            docker pull "${PROJECT_LC}/${CIRCLE_PROJECT_REPONAME#docker-}:${CIRCLE_SHA1}" || \
+            docker build -t "${PROJECT_LC}/${CIRCLE_PROJECT_REPONAME#docker-}:${CIRCLE_SHA1}" --label circle.sha="${CIRCLE_SHA1}" --label circle.build_num="${CIRCLE_BUILD_NUM}" .
       - run:
           name: Save docker image layer cache
           command: |
             mkdir -p /caches
             PROJECT_LC=$(echo "${CIRCLE_PROJECT_USERNAME}" | tr '[:upper:]' '[:lower:]')
-            docker save -o /caches/app.tar "${PROJECT_LC}/${CIRCLE_PROJECT_REPONAME#docker-}:${CIRCLE_SHA1}"
+            docker save -o /caches/app.tar  "${PROJECT_LC}/${CIRCLE_PROJECT_REPONAME#docker-}:${CIRCLE_SHA1}" $(docker history -q "${PROJECT_LC}/${CIRCLE_PROJECT_REPONAME#docker-}:${CIRCLE_SHA1}" | grep -v missing)
       - save_cache:
-          key: v1-{{ .Branch }}-{{ epoch }}
+          key: v5-{{ .Branch }}-{{ .Revision }}
           paths:
             - /caches/app.tar
-
       - run:
           name: Tag and push to Dockerhub
           command: |
@@ -57,13 +77,14 @@ jobs:
               docker tag "${PROJECT_LC}/${CIRCLE_PROJECT_REPONAME#docker-}:${CIRCLE_SHA1}" "${PROJECT_LC}/${CIRCLE_PROJECT_REPONAME#docker-}:${CIRCLE_TAG}"
             fi
             docker push "${PROJECT_LC}/${CIRCLE_PROJECT_REPONAME#docker-}"
-
 workflows:
   version: 2
   workflow:
     jobs:
+      - vault-token
       - build:
-          context: af-global
+          requires:
+          - vault-token
           filters:
             tags:
               only: /.*/
